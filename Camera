@@ -1,0 +1,32 @@
+import time
+import serial
+import cv2
+
+
+camera=cv2.VideoCapture(0)#get video from camera
+faceSearch = cv2.CascadeClassifier( 'haarcascade_frontalface.xml' )
+ser = serial.Serial('COM3', 9600)
+
+while True:#endless loop bc reading camera
+
+    ret,camera2=camera.read()
+    #480y,640x(240,320)
+    grayTone=cv2.cvtColor(camera2,cv2.COLOR_BGR2GRAY)#convert colors BGR to GRAY
+
+    faces = faceSearch.detectMultiScale( grayTone, 1.1, 5)#find faces in video
+
+
+    for (x, y, w, h) in faces:
+        cv2.rectangle(camera2,(x,y),(x+w,y+h),255,2)#draw rectangles around faces
+        if((x+w/2)<320):
+            ser.write(b'R')#if the middle point of rectangle is to the left of the center sends arduino char 'R'
+        elif((x+w/2)==320):
+            ser.write(b'S')#if the middle point of rectangle line up with center sends arduino char 'S'
+        elif((x+w/2)>320):
+            ser.write(b'L')#if the middle point of rectangle is to the right of the center sends arduino 'L'
+    cv2.imshow('video',camera2)#shows camera
+    if cv2.waitKey(25) & 0xFF==ord('q'):#if pressed q program breaks
+        break
+
+camera2.relase()
+cv2.destroyAllWindows()
